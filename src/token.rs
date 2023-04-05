@@ -1,8 +1,14 @@
+#[derive(Clone, Debug, PartialEq)]
+pub enum Literal {
+    Number(f32),
+    Str(String),
+}
+
 #[derive(Clone)]
 pub struct Token {
     pub token_type: TokenType,
     pub lexeme: String,
-    pub literal: Option<String>,
+    pub literal: Option<Literal>,
     pub line: u32,
 }
 
@@ -12,7 +18,7 @@ impl ToString for Token {
     }
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq)]
 pub enum TokenType {
     /// Single character tokens
     LeftParen,
