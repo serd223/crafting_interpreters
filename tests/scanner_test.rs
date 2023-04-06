@@ -1,6 +1,6 @@
 use crafting_interpreters::{
     scanner::Scanner,
-    token::{Literal, TokenType},
+    token::{LiteralVal, TokenType},
     Lox,
 };
 
@@ -20,6 +20,9 @@ fn simple_test() {
     assert_eq!(tokens[1].token_type, TokenType::Bang);
     assert_eq!(tokens[2].token_type, TokenType::BangEqual);
     assert_eq!(tokens[3].token_type, TokenType::Star);
-    assert_eq!(tokens[4].literal, Some(Literal::Str(String::from("hey"))));
-    assert_eq!(tokens[5].literal, Some(Literal::Number(1.25)));
+    assert_eq!(
+        tokens[4].literal,
+        Some(LiteralVal::Str(String::from("hey")))
+    );
+    assert_eq!(tokens[5].literal, Some(LiteralVal::Number(1.25)));
 }

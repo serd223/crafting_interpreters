@@ -1,6 +1,3 @@
-pub mod scanner;
-pub mod token;
-
 use clap::Parser;
 use crafting_interpreters::Lox;
 #[derive(Parser, Debug)]

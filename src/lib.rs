@@ -2,7 +2,9 @@ use std::{io::Write, path::Path};
 
 pub mod scanner;
 use scanner::Scanner;
+pub mod expr;
 pub mod token;
+
 pub struct Lox {
     had_error: bool,
 }

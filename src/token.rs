@@ -1,14 +1,23 @@
 #[derive(Clone, Debug, PartialEq)]
-pub enum Literal {
+pub enum LiteralVal {
     Number(f32),
     Str(String),
+}
+
+impl ToString for LiteralVal {
+    fn to_string(&self) -> String {
+        match self {
+            Self::Number(n) => n.to_string(),
+            Self::Str(s) => s.clone(),
+        }
+    }
 }
 
 #[derive(Clone)]
 pub struct Token {
     pub token_type: TokenType,
     pub lexeme: String,
-    pub literal: Option<Literal>,
+    pub literal: Option<LiteralVal>,
     pub line: u32,
 }
 

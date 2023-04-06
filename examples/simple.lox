@@ -1,0 +1,13 @@
+// this is a comment
+
+/* this is a
+	/*
+		block
+	comment*/ /*nice */
+*/
+
+(( )){} // grouping stuff
+!*+-/=<> <= == // operators
+1.25 + -5 * 5
+
+print "Hello, World"
