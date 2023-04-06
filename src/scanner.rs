@@ -6,12 +6,12 @@ use super::token::*;
 
 fn is_digit(c: char) -> bool {
     let u = c as u8;
-    (u >= '0' as u8) && (u <= '9' as u8)
+    (u >= b'0') && (u <= b'9')
 }
 
 fn is_alpha(c: char) -> bool {
     let u = c as u8;
-    (u >= ('a' as u8) && u <= ('z' as u8)) || (u >= ('A' as u8) && u <= ('Z' as u8)) || c == '_'
+    (u >= b'a' && u <= b'z') || (u >= b'A' && u <= b'Z') || c == '_'
 }
 
 fn is_alpha_numeric(c: char) -> bool {

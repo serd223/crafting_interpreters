@@ -1,7 +1,9 @@
 use std::{io::Write, path::Path};
 
+pub mod parser;
 pub mod scanner;
 use scanner::Scanner;
+use token::{Token, TokenType};
 pub mod expr;
 pub mod token;
 
@@ -32,6 +34,18 @@ impl Lox {
     pub fn report(&mut self, line: u32, where_: &str, message: &str) {
         eprintln!("[line {line}] Error{where_}: {message}");
         self.had_error = true;
+    }
+
+    pub fn error_token(&mut self, token: &Token, message: &str) {
+        if token.token_type == TokenType::EOF {
+            self.report(token.line, " at end", message)
+        } else {
+            self.report(
+                token.line,
+                format!(" at '{}'", token.lexeme).as_str(),
+                message,
+            )
+        }
     }
 
     pub fn run_file<T: AsRef<Path>>(&mut self, file: T) {

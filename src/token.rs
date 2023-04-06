@@ -2,6 +2,7 @@
 pub enum LiteralVal {
     Number(f32),
     Str(String),
+    Boolean(bool),
 }
 
 impl ToString for LiteralVal {
@@ -9,6 +10,7 @@ impl ToString for LiteralVal {
         match self {
             Self::Number(n) => n.to_string(),
             Self::Str(s) => s.clone(),
+            Self::Boolean(b) => b.to_string(),
         }
     }
 }
