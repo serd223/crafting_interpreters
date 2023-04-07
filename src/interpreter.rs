@@ -105,7 +105,7 @@ impl Interpreter {
                         LiteralVal::Number(right?.number_operand(operator.clone())? * -1.).into()
                     }
 
-                    TokenType::Bang => Ok(LiteralVal::Boolean(self.is_truthy(&right?))),
+                    TokenType::Bang => Ok(LiteralVal::Boolean(!self.is_truthy(&right?))),
                     _ => unreachable!(),
                 }
             }
