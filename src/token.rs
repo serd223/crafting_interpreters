@@ -1,16 +1,45 @@
+use crate::interpreter::RuntimeError;
+
 #[derive(Clone, Debug, PartialEq)]
 pub enum LiteralVal {
     Number(f32),
     Str(String),
     Boolean(bool),
+    Nil,
+    NaN,
+}
+
+impl LiteralVal {
+    pub fn number_operand(&self, operator: Token) -> Result<f32, RuntimeError> {
+        match self {
+            Self::Number(n) => Ok(*n),
+            Self::NaN => Ok(f32::NAN),
+            _ => Err(RuntimeError(operator, "Operand must be a number.")),
+        }
+    }
+}
+
+impl Into<Result<LiteralVal, RuntimeError>> for LiteralVal {
+    fn into(self) -> Result<LiteralVal, RuntimeError> {
+        Ok(self)
+    }
 }
 
 impl ToString for LiteralVal {
     fn to_string(&self) -> String {
         match self {
-            Self::Number(n) => n.to_string(),
+            Self::Number(n) => {
+                let mut res = n.to_string();
+                if res.ends_with(".0") {
+                    res.pop();
+                    res.pop();
+                }
+                res
+            }
             Self::Str(s) => s.clone(),
             Self::Boolean(b) => b.to_string(),
+            Self::Nil => "nil".to_string(),
+            Self::NaN => "Nan".to_string(),
         }
     }
 }
@@ -19,7 +48,7 @@ impl ToString for LiteralVal {
 pub struct Token {
     pub token_type: TokenType,
     pub lexeme: String,
-    pub literal: Option<LiteralVal>,
+    pub literal: LiteralVal,
     pub line: u32,
 }
 

@@ -1,5 +1,6 @@
 use crate::token::{LiteralVal, Token};
 
+#[derive(Clone)]
 pub enum Expr {
     Binary {
         left: Box<Expr>,
@@ -7,14 +8,13 @@ pub enum Expr {
         right: Box<Expr>,
     },
     Grouping(Box<Expr>),
-    Literal(Option<LiteralVal>),
+    Literal(LiteralVal),
     Unary {
         operator: Token,
         right: Box<Expr>,
     },
 }
 
-/*
 fn paranthesize(name: &str, exprs: &[&Expr]) -> String {
     let mut res = String::new();
     res.push('(');
@@ -37,12 +37,8 @@ impl ToString for Expr {
                 right,
             } => paranthesize(&operator.lexeme, &[left.as_ref(), right.as_ref()]),
             Self::Grouping(expr) => paranthesize("group", &[expr.as_ref()]),
-            Self::Literal(maybe_val) => match maybe_val {
-                Some(val) => val.to_string(),
-                None => String::from("nil"),
-            },
+            Self::Literal(val) => val.to_string(),
             Self::Unary { operator, right } => paranthesize(&operator.lexeme, &[right.as_ref()]),
         }
     }
 }
-*/

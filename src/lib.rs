@@ -1,7 +1,10 @@
 use std::{io::Write, path::Path};
 
+pub mod interpreter;
 pub mod parser;
 pub mod scanner;
+use interpreter::{Interpreter, RuntimeError};
+use parser::Parser;
 use scanner::Scanner;
 use token::{Token, TokenType};
 pub mod expr;
@@ -9,11 +12,17 @@ pub mod token;
 
 pub struct Lox {
     had_error: bool,
+    had_runtime_error: bool,
+    interpreter: Interpreter,
 }
 
 impl Default for Lox {
     fn default() -> Self {
-        Self { had_error: false }
+        Self {
+            interpreter: Interpreter {},
+            had_error: false,
+            had_runtime_error: false,
+        }
     }
 }
 
@@ -21,14 +30,34 @@ impl Lox {
     pub fn run(&mut self, source: String) {
         let mut scanner = Scanner::new(source);
         let tokens = scanner.scan_tokens(self);
+        // for token in tokens.clone() {
+        //     println!("{}", token.to_string());
+        // }
 
-        for token in tokens {
-            println!("{}", token.to_string());
+        let mut parser = Parser::new(tokens);
+        let expr = parser.parse(self);
+
+        if self.had_error {
+            return;
         }
+
+        let expr = expr.unwrap();
+        println!("\n{}\n", expr.clone().to_string());
+
+        let interpreter = self.interpreter.clone();
+        interpreter.interpret(self, expr);
+        self.interpreter = interpreter;
+
+        println!("\nDone!");
     }
 
     pub fn error(&mut self, line: u32, message: &str) {
         self.report(line, "", message);
+    }
+
+    pub fn runtime_error(&mut self, err: RuntimeError) {
+        eprintln!("{}\n[line {};token {}]", err.1, err.0.line, err.0.lexeme);
+        self.had_runtime_error = true;
     }
 
     pub fn report(&mut self, line: u32, where_: &str, message: &str) {

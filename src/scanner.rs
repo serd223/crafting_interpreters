@@ -3,6 +3,7 @@ use std::collections::HashMap;
 use crate::Lox;
 
 use super::token::*;
+use LiteralVal::Nil;
 
 fn is_digit(c: char) -> bool {
     let u = c as u8;
@@ -64,16 +65,16 @@ impl Scanner {
         let c = self.advance();
 
         match c {
-            '(' => self.add_token(TokenType::LeftParen, None),
-            ')' => self.add_token(TokenType::RightParen, None),
-            '{' => self.add_token(TokenType::LeftBrace, None),
-            '}' => self.add_token(TokenType::RightBrace, None),
-            ',' => self.add_token(TokenType::Comma, None),
-            '.' => self.add_token(TokenType::Dot, None),
-            '-' => self.add_token(TokenType::Minus, None),
-            '+' => self.add_token(TokenType::Plus, None),
-            ';' => self.add_token(TokenType::Semicolon, None),
-            '*' => self.add_token(TokenType::Star, None),
+            '(' => self.add_token(TokenType::LeftParen, Nil),
+            ')' => self.add_token(TokenType::RightParen, Nil),
+            '{' => self.add_token(TokenType::LeftBrace, Nil),
+            '}' => self.add_token(TokenType::RightBrace, Nil),
+            ',' => self.add_token(TokenType::Comma, Nil),
+            '.' => self.add_token(TokenType::Dot, Nil),
+            '-' => self.add_token(TokenType::Minus, Nil),
+            '+' => self.add_token(TokenType::Plus, Nil),
+            ';' => self.add_token(TokenType::Semicolon, Nil),
+            '*' => self.add_token(TokenType::Star, Nil),
             '!' => {
                 let token = if self.match_char('=') {
                     TokenType::BangEqual
@@ -81,7 +82,7 @@ impl Scanner {
                     TokenType::Bang
                 };
 
-                self.add_token(token, None)
+                self.add_token(token, Nil)
             }
             '=' => {
                 let token = if self.match_char('=') {
@@ -89,7 +90,7 @@ impl Scanner {
                 } else {
                     TokenType::Equal
                 };
-                self.add_token(token, None)
+                self.add_token(token, Nil)
             }
             '<' => {
                 let token = if self.match_char('=') {
@@ -97,7 +98,7 @@ impl Scanner {
                 } else {
                     TokenType::Less
                 };
-                self.add_token(token, None)
+                self.add_token(token, Nil)
             }
             '>' => {
                 let token = if self.match_char('=') {
@@ -105,7 +106,7 @@ impl Scanner {
                 } else {
                     TokenType::Greater
                 };
-                self.add_token(token, None)
+                self.add_token(token, Nil)
             }
             '/' => {
                 if self.match_char('/') {
@@ -115,7 +116,7 @@ impl Scanner {
                 } else if self.match_char('*') {
                     self.block_comment(lox);
                 } else {
-                    self.add_token(TokenType::Slash, None)
+                    self.add_token(TokenType::Slash, Nil)
                 }
             }
             ' ' | '\t' | '\r' => (),
@@ -162,9 +163,9 @@ impl Scanner {
 
         let text = &self.source[self.start..self.current];
         if let Some(keyword) = self.keywords.get(text) {
-            self.add_token(keyword.clone(), None)
+            self.add_token(keyword.clone(), Nil)
         } else {
-            self.add_token(TokenType::Identifier, None);
+            self.add_token(TokenType::Identifier, Nil);
         }
     }
 
@@ -184,7 +185,7 @@ impl Scanner {
         let substr = String::from(&self.source[self.start..self.current]);
         self.add_token(
             TokenType::Number,
-            Some(LiteralVal::Number(substr.parse::<f32>().unwrap())),
+            LiteralVal::Number(substr.parse::<f32>().unwrap()),
         )
     }
 
@@ -203,7 +204,7 @@ impl Scanner {
         self.advance(); // The closing "
 
         let value = String::from(&self.source[self.start + 1..self.current - 1]);
-        self.add_token(TokenType::String, Some(LiteralVal::Str(value)));
+        self.add_token(TokenType::String, LiteralVal::Str(value));
     }
 
     fn match_char(&mut self, expected: char) -> bool {
@@ -243,7 +244,7 @@ impl Scanner {
         self.char_at(self.current - 1)
     }
 
-    fn add_token(&mut self, token_type: TokenType, literal: Option<LiteralVal>) {
+    fn add_token(&mut self, token_type: TokenType, literal: LiteralVal) {
         let text = self.source.get(self.start..self.current).unwrap();
         self.tokens.push(Token {
             token_type,
@@ -262,7 +263,7 @@ impl Scanner {
         self.tokens.push(Token {
             token_type: TokenType::EOF,
             lexeme: String::new(),
-            literal: None,
+            literal: Nil,
             line: self.line,
         });
 

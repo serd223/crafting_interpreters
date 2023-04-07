@@ -1,0 +1,7 @@
+/*
+	Simple example for arithmetic calculations
+*/
+
+((123.5 + 76.5) * (1.5 * 2 - 4 / 2 + 1)) // 400
+				/
+		(3 / 2 * 16 / 3) // 8
