@@ -8,18 +8,17 @@ use parser::Parser;
 use scanner::Scanner;
 use token::{Token, TokenType};
 pub mod expr;
+pub mod stmt;
 pub mod token;
 
 pub struct Lox {
     had_error: bool,
     had_runtime_error: bool,
-    interpreter: Interpreter,
 }
 
 impl Default for Lox {
     fn default() -> Self {
         Self {
-            interpreter: Interpreter {},
             had_error: false,
             had_runtime_error: false,
         }
@@ -27,7 +26,7 @@ impl Default for Lox {
 }
 
 impl Lox {
-    pub fn run(&mut self, source: String) {
+    pub fn run(&mut self, source: String, interpreter: &mut Interpreter) {
         let mut scanner = Scanner::new(source);
         let tokens = scanner.scan_tokens(self);
         // for token in tokens.clone() {
@@ -35,18 +34,13 @@ impl Lox {
         // }
 
         let mut parser = Parser::new(tokens);
-        let expr = parser.parse(self);
+        let statements = parser.parse(self);
 
         if self.had_error {
             return;
         }
 
-        let expr = expr.unwrap();
-        println!("\n{}\n", expr.clone().to_string());
-
-        let interpreter = self.interpreter.clone();
-        interpreter.interpret(self, expr);
-        self.interpreter = interpreter;
+        interpreter.interpret(self, statements);
 
         println!("\nDone!");
     }
@@ -77,15 +71,15 @@ impl Lox {
         }
     }
 
-    pub fn run_file<T: AsRef<Path>>(&mut self, file: T) {
+    pub fn run_file<T: AsRef<Path>>(&mut self, file: T, interpreter: &mut Interpreter) {
         let source = std::fs::read_to_string(file).unwrap();
-        self.run(source);
+        self.run(source, interpreter);
         if self.had_error {
             panic!("had error")
         }
     }
 
-    pub fn run_prompt(&mut self) {
+    pub fn run_prompt(&mut self, interpreter: &mut Interpreter) {
         loop {
             print!("> ");
             std::io::stdout().flush().unwrap();
@@ -94,7 +88,7 @@ impl Lox {
                 Ok(_) => (),
                 Err(_) => panic!("couldn't read from stdin"),
             }
-            self.run(line);
+            self.run(line, interpreter);
         }
     }
 }

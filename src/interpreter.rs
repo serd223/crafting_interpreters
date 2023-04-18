@@ -1,5 +1,6 @@
 use crate::{
     expr::Expr,
+    stmt::Stmt,
     token::{LiteralVal, Token, TokenType},
     Lox,
 };
@@ -12,10 +13,15 @@ use LiteralVal::Nil;
 pub struct Interpreter {}
 
 impl Interpreter {
-    pub fn interpret(&self, lox: &mut Lox, expr: Expr) {
-        match self.evaluate(lox, &expr) {
-            Ok(val) => println!("{}", val.to_string()),
-            Err(err) => lox.runtime_error(err),
+    pub fn interpret(&mut self, lox: &mut Lox, statements: Vec<Stmt>) {
+        for statement in statements {
+            match self.execute(lox, statement) {
+                Err(e) => {
+                    lox.runtime_error(e);
+                    break;
+                }
+                _ => (),
+            }
         }
     }
     fn evaluate(&self, lox: &mut Lox, expr: &Expr) -> Result<LiteralVal, RuntimeError> {
@@ -119,6 +125,26 @@ impl Interpreter {
             _ => (),
         }
         res
+    }
+
+    fn execute(&mut self, lox: &mut Lox, stmt: Stmt) -> Result<(), RuntimeError> {
+        match stmt {
+            Stmt::Expression(expression) => match self.evaluate(lox, &expression) {
+                Err(e) => Err(e),
+                _ => Ok(()),
+            },
+
+            Stmt::Print(expression) => {
+                let value = self.evaluate(lox, &expression);
+                match value {
+                    Ok(val) => {
+                        println!("{}", val.to_string());
+                        Ok(())
+                    }
+                    Err(e) => Err(e),
+                }
+            }
+        }
     }
 
     pub fn is_truthy(&self, obj: &LiteralVal) -> bool {

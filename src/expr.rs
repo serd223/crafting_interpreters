@@ -13,6 +13,7 @@ pub enum Expr {
         operator: Token,
         right: Box<Expr>,
     },
+    Variable(Token),
 }
 
 fn paranthesize(name: &str, exprs: &[&Expr]) -> String {
