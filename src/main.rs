@@ -10,7 +10,7 @@ struct Args {
 fn main() {
     let Args { file } = Args::parse();
     let mut lox = Lox::default();
-    let mut interpreter = Interpreter {};
+    let mut interpreter = Interpreter::new();
     match file {
         Some(f) => lox.run_file(f, &mut interpreter),
         None => lox.run_prompt(&mut interpreter),

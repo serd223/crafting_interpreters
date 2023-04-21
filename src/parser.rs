@@ -25,14 +25,31 @@ impl Parser {
 
         while !self.is_at_end() {
             //TODO fix unwrap
-            statements.push(self.declaration(lox).unwrap())
+            if let Ok(s) = self.declaration(lox) {
+                statements.push(s)
+            }
         }
 
         statements
     }
 
     fn expression(&mut self, lox: &mut Lox) -> Result<Expr, ParserError> {
-        self.equality(lox)
+        // self.equality(lox)
+        self.assignment(lox)
+    }
+
+    fn declaration(&mut self, lox: &mut Lox) -> Result<Stmt, ParserError> {
+        let res = if self.match_types(&[TokenType::Var]) {
+            self.var_declaration(lox)
+        } else {
+            self.statement(lox)
+        };
+
+        if res.is_err() {
+            // self.synchronize(lox)
+        }
+
+        res
     }
 
     fn statement(&mut self, lox: &mut Lox) -> Result<Stmt, ParserError> {
@@ -52,6 +69,25 @@ impl Parser {
         }
     }
 
+    fn var_declaration(&mut self, lox: &mut Lox) -> Result<Stmt, ParserError> {
+        let name = self
+            .consume(lox, &TokenType::Identifier, "Expect variable name.")?
+            .clone();
+
+        let mut initializer = None;
+        if self.match_types(&[TokenType::Equal]) {
+            initializer = Some(self.expression(lox)?);
+        }
+
+        self.consume(
+            lox,
+            &TokenType::Semicolon,
+            "Expect ';' after variable declaration.",
+        )?;
+
+        Ok(Stmt::Var(name, initializer))
+    }
+
     fn expression_statement(&mut self, lox: &mut Lox) -> Result<Stmt, ParserError> {
         let value = self.expression(lox);
         self.consume(lox, &TokenType::Semicolon, "Expect ';' after expression.")?;
@@ -59,6 +95,22 @@ impl Parser {
             Ok(v) => Ok(Stmt::Expression(v)),
             Err(e) => Err(e),
         }
+    }
+
+    fn assignment(&mut self, lox: &mut Lox) -> Result<Expr, ParserError> {
+        let expr = self.equality(lox)?;
+
+        if self.match_types(&[TokenType::Equal]) {
+            let equals = self.previous().clone();
+            let value = self.assignment(lox)?;
+
+            match expr {
+                Expr::Variable(name) => return Ok(Expr::Assign(name, Box::new(value))),
+                _ => self.error(lox, &equals, "Invalid assignment target."),
+            };
+        }
+
+        Ok(expr)
     }
 
     fn equality(&mut self, lox: &mut Lox) -> Result<Expr, ParserError> {
@@ -156,6 +208,10 @@ impl Parser {
 
         if self.match_types(&[TokenType::Number, TokenType::String]) {
             return Ok(Expr::Literal(self.previous().literal.clone()));
+        }
+
+        if self.match_types(&[TokenType::Identifier]) {
+            return Ok(Expr::Variable(self.previous().clone()));
         }
 
         if self.match_types(&[TokenType::LeftParen]) {

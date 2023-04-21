@@ -1,3 +1,8 @@
 print "one";
 print true;
 print 2 + 1;
+
+var a = 5;
+a = 8;
+var b = a + 8;
+print b + 2;

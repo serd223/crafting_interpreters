@@ -7,6 +7,7 @@ use interpreter::{Interpreter, RuntimeError};
 use parser::Parser;
 use scanner::Scanner;
 use token::{Token, TokenType};
+pub mod environment;
 pub mod expr;
 pub mod stmt;
 pub mod token;

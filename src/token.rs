@@ -14,7 +14,10 @@ impl LiteralVal {
         match self {
             Self::Number(n) => Ok(*n),
             Self::NaN => Ok(f32::NAN),
-            _ => Err(RuntimeError(operator, "Operand must be a number.")),
+            _ => Err(RuntimeError(
+                operator,
+                "Operand must be a number.".to_string(),
+            )),
         }
     }
 }

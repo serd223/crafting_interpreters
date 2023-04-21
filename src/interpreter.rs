@@ -1,18 +1,25 @@
 use crate::{
+    environment::Environment,
     expr::Expr,
     stmt::Stmt,
     token::{LiteralVal, Token, TokenType},
     Lox,
 };
 
-pub struct RuntimeError(pub Token, pub &'static str);
+pub struct RuntimeError(pub Token, pub String);
 
 use LiteralVal::Nil;
 
-#[derive(Clone)]
-pub struct Interpreter {}
+pub struct Interpreter {
+    environment: Environment,
+}
 
 impl Interpreter {
+    pub fn new() -> Self {
+        Self {
+            environment: Environment::new(),
+        }
+    }
     pub fn interpret(&mut self, lox: &mut Lox, statements: Vec<Stmt>) {
         for statement in statements {
             match self.execute(lox, statement) {
@@ -24,7 +31,7 @@ impl Interpreter {
             }
         }
     }
-    fn evaluate(&self, lox: &mut Lox, expr: &Expr) -> Result<LiteralVal, RuntimeError> {
+    fn evaluate(&mut self, lox: &mut Lox, expr: &Expr) -> Result<LiteralVal, RuntimeError> {
         let mut res = match expr {
             Expr::Binary {
                 left,
@@ -72,7 +79,10 @@ impl Interpreter {
                     TokenType::Slash => {
                         let right_val = right?.number_operand(operator.clone())?;
                         if right_val == 0. {
-                            Err(RuntimeError(operator.clone(), "Division by zero."))
+                            Err(RuntimeError(
+                                operator.clone(),
+                                "Division by zero.".to_string(),
+                            ))
                         } else {
                             LiteralVal::Number(left?.number_operand(operator.clone())? / right_val)
                                 .into()
@@ -92,7 +102,7 @@ impl Interpreter {
                         }
                         _ => Err(RuntimeError(
                             operator.clone(),
-                            "Operands must be two numbers or two strings.",
+                            "Operands must be two numbers or two strings.".to_string(),
                         )),
                     },
                     _ => unreachable!(),
@@ -114,6 +124,13 @@ impl Interpreter {
                     TokenType::Bang => Ok(LiteralVal::Boolean(!self.is_truthy(&right?))),
                     _ => unreachable!(),
                 }
+            }
+
+            Expr::Variable(name) => self.environment.get(name),
+            Expr::Assign(name, expr) => {
+                let value = self.evaluate(lox, expr.as_ref())?;
+                self.environment.assign(name, value.clone())?;
+                Ok(value)
             }
         };
         match res {
@@ -143,6 +160,16 @@ impl Interpreter {
                     }
                     Err(e) => Err(e),
                 }
+            }
+
+            Stmt::Var(name, init) => {
+                let mut value = LiteralVal::Nil;
+                if let Some(expr) = init {
+                    value = self.evaluate(lox, &expr)?;
+                }
+
+                self.environment.define(name.lexeme, value);
+                Ok(())
             }
         }
     }

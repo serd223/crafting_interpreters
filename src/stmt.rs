@@ -15,6 +15,6 @@ pub enum Stmt {
     // },
     Print(Expr),
     // Return(Token, Expr),
-    Var(Token, Expr),
+    Var(Token, Option<Expr>),
     // While(Expr, Box<Stmt>),
 }
