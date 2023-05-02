@@ -39,7 +39,7 @@ impl Environment {
             }
 
             Err(RuntimeError(
-                name.clone(),
+                Some(name.clone()),
                 format!("Undefined variable '{}'.", &name.lexeme),
             ))
         }
@@ -54,7 +54,7 @@ impl Environment {
                 return enclosing.borrow_mut().assign(name, value);
             }
             Err(RuntimeError(
-                name.clone(),
+                Some(name.clone()),
                 format!("Undefined variable '{}'", &name.lexeme),
             ))
         }

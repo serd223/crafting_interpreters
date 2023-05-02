@@ -54,7 +54,10 @@ impl Lox {
     }
 
     pub fn runtime_error(&mut self, err: RuntimeError) {
-        eprintln!("{}\n[line {};token {}]", err.1, err.0.line, err.0.lexeme);
+        match err.0 {
+            Some(op) => eprintln!("{}\n[line {};token {}]", err.1, op.line, op.lexeme),
+            None => eprintln!("{}", err.1),
+        };
         self.had_runtime_error = true;
     }
 

@@ -7,6 +7,7 @@ pub enum LiteralVal {
     Boolean(bool),
     Nil,
     NaN,
+    UnInit,
 }
 
 impl LiteralVal {
@@ -15,8 +16,28 @@ impl LiteralVal {
             Self::Number(n) => Ok(*n),
             Self::NaN => Ok(f32::NAN),
             _ => Err(RuntimeError(
-                operator,
+                Some(operator),
                 "Operand must be a number.".to_string(),
+            )),
+        }
+    }
+    pub fn print(&self) -> Result<String, RuntimeError> {
+        match self {
+            Self::Number(n) => {
+                let mut res = n.to_string();
+                if res.ends_with(".0") {
+                    res.pop();
+                    res.pop();
+                }
+                Ok(res)
+            }
+            Self::Str(s) => Ok(s.clone()),
+            Self::Boolean(b) => Ok(b.to_string()),
+            Self::Nil => Ok("nil".to_string()),
+            Self::NaN => Ok("Nan".to_string()),
+            Self::UnInit => Err(RuntimeError(
+                None,
+                "Can't print unitiliazed variable.".to_string(),
             )),
         }
     }
@@ -25,25 +46,6 @@ impl LiteralVal {
 impl Into<Result<LiteralVal, RuntimeError>> for LiteralVal {
     fn into(self) -> Result<LiteralVal, RuntimeError> {
         Ok(self)
-    }
-}
-
-impl ToString for LiteralVal {
-    fn to_string(&self) -> String {
-        match self {
-            Self::Number(n) => {
-                let mut res = n.to_string();
-                if res.ends_with(".0") {
-                    res.pop();
-                    res.pop();
-                }
-                res
-            }
-            Self::Str(s) => s.clone(),
-            Self::Boolean(b) => b.to_string(),
-            Self::Nil => "nil".to_string(),
-            Self::NaN => "Nan".to_string(),
-        }
     }
 }
 

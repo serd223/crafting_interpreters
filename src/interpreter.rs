@@ -10,7 +10,7 @@ use crate::{
     Lox,
 };
 
-pub struct RuntimeError(pub Token, pub String);
+pub struct RuntimeError(pub Option<Token>, pub String);
 
 use LiteralVal::Nil;
 
@@ -85,7 +85,7 @@ impl Interpreter {
                         let right_val = right?.number_operand(operator.clone())?;
                         if right_val == 0. {
                             Err(RuntimeError(
-                                operator.clone(),
+                                Some(operator.clone()),
                                 "Division by zero.".to_string(),
                             ))
                         } else {
@@ -106,7 +106,7 @@ impl Interpreter {
                             Ok(LiteralVal::Str(sl + &sr))
                         }
                         _ => Err(RuntimeError(
-                            operator.clone(),
+                            Some(operator.clone()),
                             "Operands must be two numbers or two strings.".to_string(),
                         )),
                     },
@@ -165,7 +165,7 @@ impl Interpreter {
                 let value = self.evaluate(lox, environment, &expression);
                 match value {
                     Ok(val) => {
-                        println!("{}", val.to_string());
+                        println!("{}", val.print()?);
                         Ok(())
                     }
                     Err(e) => Err(e),
@@ -173,7 +173,7 @@ impl Interpreter {
             }
 
             Stmt::Var(name, init) => {
-                let mut value = LiteralVal::Nil;
+                let mut value = LiteralVal::UnInit;
                 if let Some(expr) = init {
                     value = self.evaluate(lox, environment, &expr)?;
                 }
