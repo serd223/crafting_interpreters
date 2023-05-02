@@ -10,6 +10,7 @@ use crate::{
     Lox,
 };
 
+#[derive(Debug)]
 pub struct RuntimeError(pub Option<Token>, pub String);
 
 use LiteralVal::Nil;
@@ -31,7 +32,7 @@ impl Interpreter {
             }
         }
     }
-    fn evaluate(
+    pub fn evaluate(
         &mut self,
         lox: &mut Lox,
         environment: EnvRef,
@@ -173,7 +174,9 @@ impl Interpreter {
             }
 
             Stmt::Var(name, init) => {
+                // To revert Chapter8/Challenge2, comment the line below and uncomment the one below that.
                 let mut value = LiteralVal::UnInit;
+                // let mut value = LiteralVal::Nil;
                 if let Some(expr) = init {
                     value = self.evaluate(lox, environment, &expr)?;
                 }

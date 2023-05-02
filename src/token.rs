@@ -49,7 +49,7 @@ impl Into<Result<LiteralVal, RuntimeError>> for LiteralVal {
     }
 }
 
-#[derive(Clone)]
+#[derive(Clone, Debug)]
 pub struct Token {
     pub token_type: TokenType,
     pub lexeme: String,

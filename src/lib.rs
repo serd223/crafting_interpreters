@@ -7,6 +7,7 @@ use environment::Environment;
 use interpreter::{Interpreter, RuntimeError};
 use parser::Parser;
 use scanner::Scanner;
+use stmt::Stmt;
 use token::{Token, TokenType};
 pub mod environment;
 pub mod expr;
@@ -30,7 +31,13 @@ impl Default for Lox {
 }
 
 impl Lox {
-    pub fn run(&mut self, source: String, interpreter: &mut Interpreter, environment: EnvRef) {
+    pub fn run(
+        &mut self,
+        source: String,
+        interpreter: &mut Interpreter,
+        environment: EnvRef,
+        repl: bool,
+    ) {
         let mut scanner = Scanner::new(source);
         let tokens = scanner.scan_tokens(self);
         // for token in tokens.clone() {
@@ -44,9 +51,30 @@ impl Lox {
             return;
         }
 
-        interpreter.interpret(self, statements, environment);
+        let should_interpret = if repl && statements.len() == 1 {
+            match &statements[0] {
+                Stmt::Expression(expr) => match interpreter.evaluate(self, environment, expr) {
+                    Ok(val) => {
+                        match val.print() {
+                            Ok(s) => println!("{s}"),
+                            Err(e) => self.runtime_error(e),
+                        }
+                        false
+                    }
+                    Err(e) => {
+                        self.runtime_error(e);
+                        false
+                    }
+                },
+                _ => true,
+            }
+        } else {
+            true
+        };
 
-        println!("\nDone!");
+        if should_interpret {
+            interpreter.interpret(self, statements, environment);
+        }
     }
 
     pub fn error(&mut self, line: u32, message: &str) {
@@ -85,7 +113,7 @@ impl Lox {
         environment: EnvRef,
     ) {
         let source = std::fs::read_to_string(file).unwrap();
-        self.run(source, interpreter, environment);
+        self.run(source, interpreter, environment, false);
         if self.had_error {
             panic!("had error")
         }
@@ -101,7 +129,7 @@ impl Lox {
                 Ok(_) => (),
                 Err(_) => panic!("couldn't read from stdin"),
             }
-            self.run(line, interpreter, environment);
+            self.run(line, interpreter, environment, true);
         }
     }
 }
