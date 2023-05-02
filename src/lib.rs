@@ -1,8 +1,9 @@
-use std::{io::Write, path::Path};
+use std::{cell::RefCell, io::Write, path::Path, rc::Rc};
 
 pub mod interpreter;
 pub mod parser;
 pub mod scanner;
+use environment::Environment;
 use interpreter::{Interpreter, RuntimeError};
 use parser::Parser;
 use scanner::Scanner;
@@ -11,6 +12,8 @@ pub mod environment;
 pub mod expr;
 pub mod stmt;
 pub mod token;
+
+type EnvRef<'a> = &'a Rc<RefCell<Environment>>;
 
 pub struct Lox {
     had_error: bool,
@@ -27,7 +30,7 @@ impl Default for Lox {
 }
 
 impl Lox {
-    pub fn run(&mut self, source: String, interpreter: &mut Interpreter) {
+    pub fn run(&mut self, source: String, interpreter: &mut Interpreter, environment: EnvRef) {
         let mut scanner = Scanner::new(source);
         let tokens = scanner.scan_tokens(self);
         // for token in tokens.clone() {
@@ -41,7 +44,7 @@ impl Lox {
             return;
         }
 
-        interpreter.interpret(self, statements);
+        interpreter.interpret(self, statements, environment);
 
         println!("\nDone!");
     }
@@ -72,16 +75,22 @@ impl Lox {
         }
     }
 
-    pub fn run_file<T: AsRef<Path>>(&mut self, file: T, interpreter: &mut Interpreter) {
+    pub fn run_file<T: AsRef<Path>>(
+        &mut self,
+        file: T,
+        interpreter: &mut Interpreter,
+        environment: EnvRef,
+    ) {
         let source = std::fs::read_to_string(file).unwrap();
-        self.run(source, interpreter);
+        self.run(source, interpreter, environment);
         if self.had_error {
             panic!("had error")
         }
     }
 
-    pub fn run_prompt(&mut self, interpreter: &mut Interpreter) {
+    pub fn run_prompt(&mut self, interpreter: &mut Interpreter, environment: EnvRef) {
         loop {
+            self.had_error = false;
             print!("> ");
             std::io::stdout().flush().unwrap();
             let mut line = String::new();
@@ -89,7 +98,7 @@ impl Lox {
                 Ok(_) => (),
                 Err(_) => panic!("couldn't read from stdin"),
             }
-            self.run(line, interpreter);
+            self.run(line, interpreter, environment);
         }
     }
 }

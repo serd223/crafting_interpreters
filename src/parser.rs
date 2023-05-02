@@ -54,10 +54,14 @@ impl Parser {
 
     fn statement(&mut self, lox: &mut Lox) -> Result<Stmt, ParserError> {
         if self.match_types(&[TokenType::Print]) {
-            self.print_statement(lox)
-        } else {
-            self.expression_statement(lox)
+            return self.print_statement(lox);
         }
+
+        if self.match_types(&[TokenType::LeftBrace]) {
+            return Ok(Stmt::Block(self.block(lox)?));
+        }
+
+        self.expression_statement(lox)
     }
 
     fn print_statement(&mut self, lox: &mut Lox) -> Result<Stmt, ParserError> {
@@ -95,6 +99,22 @@ impl Parser {
             Ok(v) => Ok(Stmt::Expression(v)),
             Err(e) => Err(e),
         }
+    }
+
+    fn block(&mut self, lox: &mut Lox) -> Result<Vec<Stmt>, ParserError> {
+        let mut res = vec![];
+
+        while !self.check(&TokenType::RightBrace) && !self.is_at_end() {
+            res.push(self.declaration(lox)?);
+        }
+
+        self.consume(
+            lox,
+            &TokenType::RightBrace,
+            "Expect '}' at the end of a block.",
+        )?;
+
+        Ok(res)
     }
 
     fn assignment(&mut self, lox: &mut Lox) -> Result<Expr, ParserError> {

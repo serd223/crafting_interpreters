@@ -1,3 +1,7 @@
+use std::{cell::RefCell, rc::Rc};
+
+type EnvRef<'a> = &'a Rc<RefCell<Environment>>;
+
 use crate::{
     environment::Environment,
     expr::Expr,
@@ -10,19 +14,15 @@ pub struct RuntimeError(pub Token, pub String);
 
 use LiteralVal::Nil;
 
-pub struct Interpreter {
-    environment: Environment,
-}
+pub struct Interpreter {}
 
 impl Interpreter {
     pub fn new() -> Self {
-        Self {
-            environment: Environment::new(),
-        }
+        Self {}
     }
-    pub fn interpret(&mut self, lox: &mut Lox, statements: Vec<Stmt>) {
+    pub fn interpret(&mut self, lox: &mut Lox, statements: Vec<Stmt>, environment: EnvRef) {
         for statement in statements {
-            match self.execute(lox, statement) {
+            match self.execute(lox, environment, statement) {
                 Err(e) => {
                     lox.runtime_error(e);
                     break;
@@ -31,15 +31,20 @@ impl Interpreter {
             }
         }
     }
-    fn evaluate(&mut self, lox: &mut Lox, expr: &Expr) -> Result<LiteralVal, RuntimeError> {
+    fn evaluate(
+        &mut self,
+        lox: &mut Lox,
+        environment: EnvRef,
+        expr: &Expr,
+    ) -> Result<LiteralVal, RuntimeError> {
         let mut res = match expr {
             Expr::Binary {
                 left,
                 operator,
                 right,
             } => {
-                let left = self.evaluate(lox, left.as_ref());
-                let right = self.evaluate(lox, right.as_ref());
+                let left = self.evaluate(lox, environment, left.as_ref());
+                let right = self.evaluate(lox, environment, right.as_ref());
 
                 match operator.token_type {
                     TokenType::Greater => LiteralVal::Boolean(
@@ -109,12 +114,12 @@ impl Interpreter {
                 }
             }
 
-            Expr::Grouping(expr) => self.evaluate(lox, expr.as_ref()),
+            Expr::Grouping(expr) => self.evaluate(lox, environment, expr.as_ref()),
 
             Expr::Literal(value) => Ok(value.clone()),
 
             Expr::Unary { operator, right } => {
-                let right = self.evaluate(lox, right.as_ref());
+                let right = self.evaluate(lox, environment, right.as_ref());
 
                 match operator.token_type {
                     TokenType::Minus => {
@@ -126,10 +131,10 @@ impl Interpreter {
                 }
             }
 
-            Expr::Variable(name) => self.environment.get(name),
+            Expr::Variable(name) => environment.borrow().get(name),
             Expr::Assign(name, expr) => {
-                let value = self.evaluate(lox, expr.as_ref())?;
-                self.environment.assign(name, value.clone())?;
+                let value = self.evaluate(lox, environment, expr.as_ref())?;
+                environment.borrow_mut().assign(name, value.clone())?;
                 Ok(value)
             }
         };
@@ -144,15 +149,20 @@ impl Interpreter {
         res
     }
 
-    fn execute(&mut self, lox: &mut Lox, stmt: Stmt) -> Result<(), RuntimeError> {
+    fn execute(
+        &mut self,
+        lox: &mut Lox,
+        environment: EnvRef,
+        stmt: Stmt,
+    ) -> Result<(), RuntimeError> {
         match stmt {
-            Stmt::Expression(expression) => match self.evaluate(lox, &expression) {
+            Stmt::Expression(expression) => match self.evaluate(lox, environment, &expression) {
                 Err(e) => Err(e),
                 _ => Ok(()),
             },
 
             Stmt::Print(expression) => {
-                let value = self.evaluate(lox, &expression);
+                let value = self.evaluate(lox, environment, &expression);
                 match value {
                     Ok(val) => {
                         println!("{}", val.to_string());
@@ -165,13 +175,33 @@ impl Interpreter {
             Stmt::Var(name, init) => {
                 let mut value = LiteralVal::Nil;
                 if let Some(expr) = init {
-                    value = self.evaluate(lox, &expr)?;
+                    value = self.evaluate(lox, environment, &expr)?;
                 }
 
-                self.environment.define(name.lexeme, value);
+                environment.borrow_mut().define(name.lexeme, value);
                 Ok(())
             }
+
+            Stmt::Block(statements) => self.execute_block(
+                lox,
+                &statements,
+                Environment::with_enclosing(Rc::clone(environment)),
+            ),
         }
+    }
+
+    fn execute_block(
+        &mut self,
+        lox: &mut Lox,
+        statements: &Vec<Stmt>,
+        environment: Environment,
+    ) -> Result<(), RuntimeError> {
+        let er = Rc::new(RefCell::new(environment));
+
+        for stmt in statements {
+            self.execute(lox, &er, stmt.clone())?;
+        }
+        Ok(())
     }
 
     pub fn is_truthy(&self, obj: &LiteralVal) -> bool {

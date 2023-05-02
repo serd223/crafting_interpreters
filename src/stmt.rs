@@ -1,7 +1,8 @@
 use crate::{expr::Expr, token::Token};
 
+#[derive(Clone)]
 pub enum Stmt {
-    // Block(Vec<Stmt>),
+    Block(Vec<Stmt>),
     Expression(Expr),
     // Function {
     //     name: Token,

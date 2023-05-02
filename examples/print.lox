@@ -2,7 +2,35 @@ print "one";
 print true;
 print 2 + 1;
 
-var a = 5;
-a = 8;
-var b = a + 8;
-print b + 2;
+print "";
+
+/*
+Example that showcases scoping and shadowing.
+Source: https://craftinginterpreters.com/statements-and-state.html#assignment
+*/
+
+var a = "global a";
+var b = "global b";
+var c = "global c";
+
+{
+	var a = "outer a";
+	var b = "outer b";
+	
+	{
+		var a = "inner a";
+		print "* " + a;
+		print "* " + b;
+		print "* " + c;
+		print "";
+	}
+	
+	print "- " + a;
+	print "- " + b;
+	print "- " + c;
+	print "";
+}
+
+print "+ " + a;
+print "+ " + b;
+print "+ " + c;
